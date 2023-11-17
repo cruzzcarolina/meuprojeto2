@@ -35,13 +35,14 @@ func LerArquivo() {
 		descricao := linha[2]
 		preco, _ := strconv.ParseFloat(linha[3], 64)
 
-		// Atualiza o preço se o produto já existir
-		AtualizarPreco(id, preco)
-
-		// Adiciona ou atualiza o produto
 		ret := AdicionarUnico(nome, descricao, preco, id)
 		if ret < 0 {
 			fmt.Println("Ocorreu um erro ao adicionar o produto:", id, nome)
+		} else {
+			// Atualiza TotalProdutosJaCadastrados para o maior ID encontrado
+			if id > TotalProdutosJaCadastrados {
+				TotalProdutosJaCadastrados = id
+			}
 		}
 	}
 
