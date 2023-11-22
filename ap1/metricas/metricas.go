@@ -8,6 +8,7 @@ type Metricas struct {
 	produtosCadastrados int
 	pedidosEncerrados   int
 	pedidosEmAndamento  int
+	ticketMedio         float64
 }
 
 var M = Metricas{
@@ -16,6 +17,7 @@ var M = Metricas{
 	produtosCadastrados: 0,
 	pedidosEncerrados:   0,
 	pedidosEmAndamento:  0,
+	ticketMedio:         0.0,
 }
 
 func (m *Metricas) SomaProdutosCadastrados(valor int) {
@@ -34,10 +36,18 @@ func (m *Metricas) AtualizaExpedicao(novoTempo int, valorVenda float64) {
 }
 
 func (m *Metricas) ExibirMetricas() {
+	faturamentoTotalAtual := m.faturamentoTotal
+
+	// Calcula o ticket médio
+	if m.pedidosEncerrados > 0 {
+		m.ticketMedio = faturamentoTotalAtual / float64(m.pedidosEncerrados)
+	}
+
 	fmt.Println("\nMétricas de resultados do sistema:")
 	fmt.Println("Número de produtos cadastrados:", m.produtosCadastrados)
 	fmt.Println("Número de pedidos em andamento:", m.pedidosEmAndamento)
 	fmt.Println("Número de pedidos encerrados:", m.pedidosEncerrados)
 	fmt.Printf("Tempo médio para expedição de pedidos (em min): %.2f\n", m.tempoMedioExpedicao)
 	fmt.Printf("Faturamento total: R$ %.2f\n", m.faturamentoTotal)
+	fmt.Printf("Ticket médio: R$ %.2f\n", m.ticketMedio)
 }

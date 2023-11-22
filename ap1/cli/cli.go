@@ -23,6 +23,7 @@ func opcoes() {
 	fmt.Println("7 - Expedir pedido;")
 	fmt.Println("8 - Exibir métricas do sistema;")
 	fmt.Println("9 - Atualizar preço de um produto;")
+	fmt.Println("10 - Exibir produtos ordenados por nome")
 	fmt.Println("20 - Exibir todos os pedidos em andamento;")
 	fmt.Println("21 - Cadastrar produtos em lote;")
 	fmt.Println("100 - Sair do programa;")
@@ -54,6 +55,8 @@ func Cli() {
 			metricas.M.ExibirMetricas()
 		case "9":
 			atualizarPrecoProduto()
+		case "10":
+			produtos.ExibirOrdenadoPorNome()
 		case "20":
 			pedidos.Exibir()
 		case "21":

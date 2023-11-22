@@ -11,6 +11,7 @@ const maxPedidos = 1000
 var Pedidos [maxPedidos]Pedido
 var totalPedidos = 0
 var inicioFila, fimFila = -1, -1
+var TotalFaturado float64
 
 /*
 Adiciona um pedido com a informação se é ou não delivery.
@@ -68,8 +69,14 @@ Atualiza as métricas do sistema.
 Retorna 0 em caso de sucesso, ou -1 caso não haja pedidos na fila.
 */
 func Expedir() int {
+	if inicioFila == -1 {
+		fmt.Println("Não há pedidos para expedir!")
+		return -1
+	}
+
 	pedidoExpedido := excluir()
 	if (pedidoExpedido == Pedido{}) {
+		fmt.Println("Não há pedidos para expedir!")
 		return -1
 	}
 

@@ -2,12 +2,13 @@ package pedidos
 
 import (
 	"fmt"
-	"time"
 	i "mcronalds/itens"
+	"time"
 )
 
 const maxItensPedido = 10
 const taxaDelivery = 10.0
+
 var TotalPedidosJaCadastrados = 0
 
 type Pedido struct {
@@ -43,7 +44,9 @@ func (p *Pedido) exibir() {
 	fmt.Println("Itens no pedido:")
 
 	for _, item := range p.ItensPedido {
-		if (item == i.Item{}) { break }
+		if (item == i.Item{}) {
+			break
+		}
 
 		fmt.Println(item.Quant, "x", item.Prod.Nome)
 	}
@@ -58,10 +61,14 @@ Retorna -2 caso o id buscado não corresponda a um produto.
 Retorna 0 em caso de sucesso.
 */
 func (p *Pedido) AdicionarItem(id, quant int) int {
-	if p.TotalItens == maxItensPedido { return -1 }
+	if p.TotalItens == maxItensPedido {
+		return -1
+	}
 
 	item := i.Criar(id, quant)
-	if (item == i.Item{}) { return -2 }
+	if (item == i.Item{}) {
+		return -2
+	}
 
 	p.ItensPedido[p.TotalItens] = item
 	p.TotalItens++

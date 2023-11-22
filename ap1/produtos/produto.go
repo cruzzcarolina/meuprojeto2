@@ -2,7 +2,13 @@ package produtos
 
 import "fmt"
 
+type Node struct {
+	Produto Produto
+	Proximo *Node
+}
+
 var TotalProdutosJaCadastrados = 0
+
 
 type Produto struct {
 	Id        int

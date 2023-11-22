@@ -5,25 +5,35 @@ import (
 	"strings"
 )
 
+type NodoProduto struct {
+	Produto Produto
+	Proximo *NodoProduto
+}
+
+type ListaProdutos struct {
+	Cabeca *NodoProduto
+}
+
 const maxProdutos = 50
 
-var Produtos [maxProdutos]Produto
 var totalProdutos = 0
 
-func tentarCriar(nome, descricao string, preco float64, id int) Produto {
+var ListaProdutosEncadeada ListaProdutos // Variável global para a lista encadeada
+
+func tentarCriar(nome, descricao string, preco float64, id int) *NodoProduto {
 	if id != -1 {
 		_, idProcurado := BuscarId(id)
 		if idProcurado != -1 {
-			return Produto{}
+			return nil
 		}
 	}
 
-	return criar(nome, descricao, preco, id)
+	return &NodoProduto{Produto: criar(nome, descricao, preco, id), Proximo: nil}
 }
 
 /*
 Adiciona um produto com nome, descrição e preço à lista de produtos.
-Adiciona o produto primeiro espaço vazio da lista.
+Adiciona o produto ao final da lista.
 Caso já exista um produto com o mesmo id, não adiciona e retorna -3.
 Caso já exista um produto com o mesmo nome, não adiciona e retorna erro -2.
 Retorna -1 caso a lista esteja cheia, ou o número de produtos cadastrados em caso de sucesso.
@@ -33,28 +43,31 @@ func AdicionarUnico(nome, descricao string, preco float64, id int) int {
 		return -1 // Overflow
 	}
 
-	for i, produto := range Produtos {
-		if (produto == Produto{}) {
-			break
-		}
-
-		if produto.Id == id {
-			// Atualiza o preço do produto existente
-			AtualizarPrecoProduto(id, preco)
-			return i + 1 // Retorna o número de produtos cadastrados
-		}
-	}
-
-	// Se o produto não existe, adiciona um novo
-	produtoCriado := tentarCriar(nome, descricao, preco, id)
-	if (produtoCriado == Produto{}) {
+	novoNodo := tentarCriar(nome, descricao, preco, id)
+	if novoNodo == nil {
 		return -3
 	}
 
-	Produtos[totalProdutos] = produtoCriado
+	// Adiciona o novo nó ao final da lista
+	if ListaProdutosEncadeada.Cabeca == nil {
+		ListaProdutosEncadeada.Cabeca = novoNodo
+	} else {
+		ultimoNodo := obterUltimoNodo(ListaProdutosEncadeada.Cabeca)
+		ultimoNodo.Proximo = novoNodo
+	}
+
 	totalProdutos++
 	m.M.SomaProdutosCadastrados(1)
 	return totalProdutos
+}
+
+// Função auxiliar para obter o último nodo na lista encadeada
+func obterUltimoNodo(cabeca *NodoProduto) *NodoProduto {
+	atual := cabeca
+	for atual.Proximo != nil {
+		atual = atual.Proximo
+	}
+	return atual
 }
 
 /*
@@ -63,13 +76,16 @@ Retorna o produto encontrado e a sua posição na lista, em caso de sucesso.
 Retorna um produto vazio e -1 em caso de erro.
 */
 func BuscarId(id int) (Produto, int) {
-	for ind, produto := range Produtos {
-		if (produto == Produto{}) {
-			break
+	atual := ListaProdutosEncadeada.Cabeca
+	indice := 0
+
+	for atual != nil {
+		if atual.Produto.Id == id {
+			return atual.Produto, indice
 		}
-		if produto.Id == id {
-			return produto, ind
-		}
+
+		atual = atual.Proximo
+		indice++
 	}
 
 	return Produto{}, -1
@@ -82,15 +98,15 @@ Retorna um slice com todos os produtos encontrados, e o tamanho do slice.
 func BuscarNome(comecaCom string) ([]Produto, int) {
 	var produtosEncontrados []Produto
 
-	for _, produto := range Produtos {
-		if (produto == Produto{}) {
-			break
-		}
+	atual := ListaProdutosEncadeada.Cabeca
 
-		if strings.HasPrefix(produto.Nome, comecaCom) {
-			produtosEncontrados = append(produtosEncontrados, produto)
+	for atual != nil {
+		if strings.HasPrefix(atual.Produto.Nome, comecaCom) {
+			produtosEncontrados = append(produtosEncontrados, atual.Produto)
 		}
+		atual = atual.Proximo
 	}
+
 	return produtosEncontrados, len(produtosEncontrados)
 }
 
@@ -98,11 +114,11 @@ func BuscarNome(comecaCom string) ([]Produto, int) {
 Exibe todos os produtos cadastrados.
 */
 func Exibir() {
-	for _, produto := range Produtos {
-		if (produto == Produto{}) {
-			break
-		}
-		produto.Exibir()
+	atual := ListaProdutosEncadeada.Cabeca
+
+	for atual != nil {
+		atual.Produto.Exibir()
+		atual = atual.Proximo
 	}
 }
 
@@ -116,31 +132,83 @@ func Excluir(id int) int {
 		return -2
 	}
 
-	_, ind := BuscarId(id)
-	if ind == -1 {
+	if ListaProdutosEncadeada.Cabeca == nil {
 		return -1
 	}
 
-	for i := ind; i < totalProdutos-1; i++ {
-		Produtos[i] = Produtos[i+1]
+	if ListaProdutosEncadeada.Cabeca.Produto.Id == id {
+		// Remove o primeiro nó se for o procurado
+		ListaProdutosEncadeada.Cabeca = ListaProdutosEncadeada.Cabeca.Proximo
+		totalProdutos--
+		m.M.SomaProdutosCadastrados(-1)
+		return 0
 	}
-	totalProdutos--
-	Produtos[totalProdutos] = Produto{}
-	m.M.SomaProdutosCadastrados(-1)
-	return 0
+
+	anterior := ListaProdutosEncadeada.Cabeca
+	atual := anterior.Proximo
+
+	for atual != nil {
+		if atual.Produto.Id == id {
+			// Remove o nó encontrado
+			anterior.Proximo = atual.Proximo
+			totalProdutos--
+			m.M.SomaProdutosCadastrados(-1)
+			return 0
+		}
+		anterior = atual
+		atual = atual.Proximo
+	}
+
+	return -1
 }
 
 func AtualizarPrecoProduto(id int, novoPreco float64) bool {
-	for i, produto := range Produtos {
-		if (produto == Produto{}) {
-			break
-		}
+	atual := ListaProdutosEncadeada.Cabeca
 
-		if produto.Id == id {
-			Produtos[i].Preco = novoPreco
+	for atual != nil {
+		if atual.Produto.Id == id {
+			atual.Produto.Preco = novoPreco
 			return true
 		}
+		atual = atual.Proximo
 	}
 
 	return false
+}
+
+func ExibirOrdenadoPorNome() {
+	// Converte a lista encadeada para um slice para facilitar a ordenação
+	produtos := listaParaSlice(ListaProdutosEncadeada.Cabeca)
+
+	// Ordena os produtos por nome
+	ordenarProdutosPorNome(produtos)
+
+	for _, produto := range produtos {
+		produto.Exibir()
+	}
+}
+
+// Função auxiliar para converter uma lista encadeada em um slice
+func listaParaSlice(cabeca *NodoProduto) []Produto {
+	var produtos []Produto
+
+	atual := cabeca
+	for atual != nil {
+		produtos = append(produtos, atual.Produto)
+		atual = atual.Proximo
+	}
+
+	return produtos
+}
+
+// Função auxiliar para ordenar os produtos por nome
+func ordenarProdutosPorNome(produtos []Produto) {
+	for i := 0; i < len(produtos)-1; i++ {
+		for j := i + 1; j < len(produtos); j++ {
+			if produtos[i].Nome > produtos[j].Nome {
+				// Troca os produtos de posição se estiverem fora de ordem
+				produtos[i], produtos[j] = produtos[j], produtos[i]
+			}
+		}
+	}
 }
