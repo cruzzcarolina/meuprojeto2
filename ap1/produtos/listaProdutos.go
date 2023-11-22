@@ -20,6 +20,19 @@ var totalProdutos = 0
 
 var ListaProdutosEncadeada ListaProdutos // Variável global para a lista encadeada
 
+// Função auxiliar para ordenar os produtos por nome usando o algoritmo Bubble Sort
+func ordenarProdutosPorNomeBubbleSort(produtos []Produto) {
+	n := len(produtos)
+	for i := 0; i < n-1; i++ {
+		for j := 0; j < n-i-1; j++ {
+			if produtos[j].Nome > produtos[j+1].Nome {
+				// Troca os produtos de posição se estiverem fora de ordem
+				produtos[j], produtos[j+1] = produtos[j+1], produtos[j]
+			}
+		}
+	}
+}
+
 func tentarCriar(nome, descricao string, preco float64, id int) *NodoProduto {
 	if id != -1 {
 		_, idProcurado := BuscarId(id)
@@ -180,8 +193,8 @@ func ExibirOrdenadoPorNome() {
 	// Converte a lista encadeada para um slice para facilitar a ordenação
 	produtos := listaParaSlice(ListaProdutosEncadeada.Cabeca)
 
-	// Ordena os produtos por nome
-	ordenarProdutosPorNome(produtos)
+	// Ordena os produtos por nome usando o Bubble Sort
+	ordenarProdutosPorNomeBubbleSort(produtos)
 
 	for _, produto := range produtos {
 		produto.Exibir()
